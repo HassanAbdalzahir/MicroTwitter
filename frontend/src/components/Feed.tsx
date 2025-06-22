@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Post from "./Post";
+import { config } from "../config/env";
 
 interface PostType {
   _id: string;
@@ -17,8 +18,7 @@ export default function Feed({ refresh }: { refresh: number }) {
 
   useEffect(() => {
     setLoading(true);
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-    fetch(`${apiUrl}/api/posts`)
+    fetch(`${config.apiUrl}/api/posts`)
       .then((res) => res.json())
       .then((data) => {
         setPosts(data);

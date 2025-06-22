@@ -5,9 +5,7 @@ import { useAuth } from "../../../context/AuthContext";
 import { useRouter } from "next/navigation";
 import io from "socket.io-client";
 import Link from "next/link";
-
-const SOCKET_URL =
-  process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001";
+import { config } from "../../../config/env";
 
 interface ChatMessage {
   from: string;
@@ -49,8 +47,7 @@ export default function ChatConversation({
     }
 
     // Fetch chat user details
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-    fetch(`${apiUrl}/api/users/${params.userId}`, {
+    fetch(`${config.apiUrl}/api/users/${params.userId}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -61,7 +58,7 @@ export default function ChatConversation({
       });
 
     // Fetch chat history
-    fetch(`${apiUrl}/api/chats/${params.userId}`, {
+    fetch(`${config.apiUrl}/api/chats/${params.userId}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -78,7 +75,7 @@ export default function ChatConversation({
       });
 
     // Connect to socket
-    socketRef.current = io(apiUrl);
+    socketRef.current = io(config.socketUrl, { path: config.socketPath });
 
     // Join room
     socketRef.current.emit("join", user._id);
@@ -264,15 +261,17 @@ export default function ChatConversation({
 
     try {
       // Send via REST for persistence - this will also emit the socket event
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-      const response = await fetch(`${apiUrl}/api/chats/${params.userId}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ content: messageContent }),
-      });
+      const response = await fetch(
+        `${config.apiUrl}/api/chats/${params.userId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ content: messageContent }),
+        }
+      );
 
       if (!response.ok) {
         // If the request failed, restore the input
@@ -319,8 +318,7 @@ export default function ChatConversation({
     if (!token) return;
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-      await fetch(`${apiUrl}/api/chats/${params.userId}/read`, {
+      await fetch(`${config.apiUrl}/api/chats/${params.userId}/read`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -328,7 +326,7 @@ export default function ChatConversation({
       });
 
       // Update global unread count
-      fetch(`${apiUrl}/api/chats/history`, {
+      fetch(`${config.apiUrl}/api/chats/history`, {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((res) => res.json())

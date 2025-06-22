@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import ChatHistory from "../../components/ChatHistory";
 import { useRouter } from "next/navigation";
+import { config } from "../../config/env";
 
 interface User {
   _id: string;
@@ -25,9 +26,8 @@ export default function ChatPage() {
 
     setIsSearching(true);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
       const res = await fetch(
-        `${apiUrl}/api/users/search?username=${encodeURIComponent(
+        `${config.apiUrl}/api/users/search?username=${encodeURIComponent(
           searchQuery
         )}`,
         {

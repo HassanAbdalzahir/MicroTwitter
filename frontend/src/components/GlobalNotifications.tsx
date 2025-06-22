@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { usePathname } from "next/navigation";
 import io from "socket.io-client";
+import { config } from "../config/env";
 
 export default function GlobalNotifications() {
   const { user, token, unreadCount, setUnreadCount } = useAuth();
@@ -12,8 +13,7 @@ export default function GlobalNotifications() {
   useEffect(() => {
     if (!user || !token) return;
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-    const socket = io(apiUrl);
+    const socket = io(config.socketUrl, { path: config.socketPath });
 
     socket.emit("join", user._id);
 
@@ -35,7 +35,7 @@ export default function GlobalNotifications() {
       // If we're marking messages as read (we're the 'to' user), decrease count
       if (to === user._id) {
         // Fetch updated unread count from server
-        fetch(`${apiUrl}/api/chats/history`, {
+        fetch(`${config.apiUrl}/api/chats/history`, {
           headers: { Authorization: `Bearer ${token}` },
         })
           .then((res) => res.json())
@@ -53,7 +53,7 @@ export default function GlobalNotifications() {
     });
 
     // Fetch initial unread count
-    fetch(`${apiUrl}/api/chats/history`, {
+    fetch(`${config.apiUrl}/api/chats/history`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())

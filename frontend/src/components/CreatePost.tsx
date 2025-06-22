@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { config } from "../config/env";
 
 export default function CreatePost({ onPost }: { onPost: () => void }) {
   const { user, token } = useAuth();
@@ -9,8 +10,7 @@ export default function CreatePost({ onPost }: { onPost: () => void }) {
   const handlePost = async () => {
     if (!content.trim() || !token || !user) return;
     setLoading(true);
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-    await fetch(`${apiUrl}/api/posts`, {
+    await fetch(`${config.apiUrl}/api/posts`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

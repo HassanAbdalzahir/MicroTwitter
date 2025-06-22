@@ -3,6 +3,7 @@
 import { useAuth } from "../../context/AuthContext";
 import { useState, useRef } from "react";
 import Link from "next/link";
+import { config } from "../../config/env";
 
 export default function ProfilePage() {
   const { user, token } = useAuth();
@@ -64,8 +65,7 @@ export default function ProfilePage() {
     setMessage("");
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-      const res = await fetch(`${apiUrl}/api/auth/avatar`, {
+      const res = await fetch(`${config.apiUrl}/api/auth/avatar`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

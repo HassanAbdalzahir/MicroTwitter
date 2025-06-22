@@ -22,10 +22,11 @@ This document explains how to configure the MicroTwitter frontend application us
 
 ### Required Variables
 
-| Variable                 | Description            | Default                 | Example                           |
-| ------------------------ | ---------------------- | ----------------------- | --------------------------------- |
-| `NEXT_PUBLIC_API_URL`    | Backend API server URL | `http://localhost:3001` | `https://api.microtwitter.com`    |
-| `NEXT_PUBLIC_SOCKET_URL` | Socket.IO server URL   | `http://localhost:3001` | `https://socket.microtwitter.com` |
+| Variable                  | Description            | Default                            | Example                                           |
+| ------------------------- | ---------------------- | ---------------------------------- | ------------------------------------------------- |
+| `NEXT_PUBLIC_API_URL`     | Backend API server URL | `http://localhost:3001`            | `https://server.nanocode.online/api/microtwitter` |
+| `NEXT_PUBLIC_SOCKET_URL`  | Socket.IO server URL   | `http://localhost:3001`            | `https://server.nanocode.online`                  |
+| `NEXT_PUBLIC_SOCKET_PATH` | Socket.IO path         | `/apps/microtwitter/api/socket.io` | `/apps/microtwitter/api/socket.io`                |
 
 ### Optional Variables
 
@@ -52,17 +53,29 @@ This document explains how to configure the MicroTwitter frontend application us
 # .env.local
 NEXT_PUBLIC_API_URL=http://localhost:3001
 NEXT_PUBLIC_SOCKET_URL=http://localhost:3001
+NEXT_PUBLIC_SOCKET_PATH=/apps/microtwitter/api/socket.io
 NODE_ENV=development
 ```
 
-### Production
+### Production (Subdomain Structure)
+
+```bash
+# .env.production
+NEXT_PUBLIC_API_URL=https://server.nanocode.online/api/microtwitter
+NEXT_PUBLIC_SOCKET_URL=https://server.nanocode.online
+NEXT_PUBLIC_SOCKET_PATH=/apps/microtwitter/api/socket.io
+NODE_ENV=production
+NEXT_PUBLIC_ANALYTICS_ID=G-XXXXXXXXXX
+```
+
+### Traditional Production
 
 ```bash
 # .env.production
 NEXT_PUBLIC_API_URL=https://api.yourdomain.com
 NEXT_PUBLIC_SOCKET_URL=https://socket.yourdomain.com
+NEXT_PUBLIC_SOCKET_PATH=/socket.io
 NODE_ENV=production
-NEXT_PUBLIC_ANALYTICS_ID=G-XXXXXXXXXX
 ```
 
 ### Staging
@@ -71,6 +84,7 @@ NEXT_PUBLIC_ANALYTICS_ID=G-XXXXXXXXXX
 # .env.staging
 NEXT_PUBLIC_API_URL=https://api-staging.yourdomain.com
 NEXT_PUBLIC_SOCKET_URL=https://socket-staging.yourdomain.com
+NEXT_PUBLIC_SOCKET_PATH=/apps/microtwitter/api/socket.io
 NODE_ENV=production
 ```
 
@@ -84,8 +98,8 @@ import { config } from "../config/env";
 // Use API URL
 const apiUrl = config.apiUrl;
 
-// Use Socket URL
-const socketUrl = config.socketUrl;
+// Use Socket URL with path
+const socket = io(config.socketUrl, { path: config.socketPath });
 
 // Check if features are enabled
 if (config.enableChat) {
@@ -97,6 +111,24 @@ if (config.isDevelopment) {
   // Development-only code
 }
 ```
+
+## Deployment Structure
+
+### Subdomain Deployment (Recommended)
+
+This structure is designed for deployments where:
+
+- API is served at: `server.nanocode.online/api/microtwitter/`
+- Frontend is served at: `server.nanocode.online/apps/microtwitter`
+- Socket.IO is served at: `server.nanocode.online/apps/microtwitter/api/socket.io`
+
+### Traditional Deployment
+
+For traditional deployments with separate domains:
+
+- API: `api.yourdomain.com`
+- Frontend: `yourdomain.com`
+- Socket.IO: `socket.yourdomain.com`
 
 ## Security Considerations
 
@@ -121,9 +153,10 @@ if (config.isDevelopment) {
    - Ensure CORS is properly configured on the backend
 
 3. **Socket connection errors**
-   - Verify `NEXT_PUBLIC_SOCKET_URL` is correct
+   - Verify `NEXT_PUBLIC_SOCKET_URL` and `NEXT_PUBLIC_SOCKET_PATH` are correct
    - Check if the Socket.IO server is running
    - Ensure the socket server accepts connections from your frontend domain
+   - For subdomain deployments, ensure the path matches your server configuration
 
 ### Validation
 
@@ -147,8 +180,9 @@ console.log("Current configuration:", config);
 
 ```dockerfile
 # Use environment variables in Dockerfile
-ENV NEXT_PUBLIC_API_URL=https://api.yourdomain.com
-ENV NEXT_PUBLIC_SOCKET_URL=https://socket.yourdomain.com
+ENV NEXT_PUBLIC_API_URL=https://server.nanocode.online/api/microtwitter
+ENV NEXT_PUBLIC_SOCKET_URL=https://server.nanocode.online
+ENV NEXT_PUBLIC_SOCKET_PATH=/apps/microtwitter/api/socket.io
 ```
 
 ### Other Platforms

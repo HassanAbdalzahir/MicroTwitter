@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import Link from "next/link";
 import io from "socket.io-client";
+import { config } from "../config/env";
 
 interface ChatUser {
   _id: string;
@@ -27,8 +28,7 @@ export default function ChatHistory() {
     if (!token) return;
 
     setLoading(true);
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-    fetch(`${apiUrl}/api/chats/history`, {
+    fetch(`${config.apiUrl}/api/chats/history`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -70,9 +70,7 @@ export default function ChatHistory() {
   useEffect(() => {
     if (!user) return;
 
-    const socketUrl =
-      process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001";
-    const socket = io(socketUrl);
+    const socket = io(config.socketUrl, { path: config.socketPath });
 
     socket.emit("join", user._id);
 

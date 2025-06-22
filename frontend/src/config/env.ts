@@ -7,6 +7,10 @@ export const config = {
   // Socket.IO Configuration
   socketUrl: process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001",
 
+  // Socket.IO Path Configuration
+  socketPath:
+    process.env.NEXT_PUBLIC_SOCKET_PATH || "/apps/microtwitter/api/socket.io",
+
   // App Configuration
   appName: process.env.NEXT_PUBLIC_APP_NAME || "MicroTwitter",
   appDescription:
