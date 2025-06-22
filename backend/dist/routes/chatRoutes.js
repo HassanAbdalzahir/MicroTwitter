@@ -18,6 +18,271 @@ const Chat_1 = __importDefault(require("../models/Chat"));
 const User_1 = __importDefault(require("../models/User"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const router = express_1.default.Router();
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     ChatMessage:
+ *       type: object
+ *       required:
+ *         - from
+ *         - to
+ *         - content
+ *       properties:
+ *         _id:
+ *           type: string
+ *           description: Message ID
+ *         from:
+ *           type: string
+ *           description: Sender user ID
+ *         to:
+ *           type: string
+ *           description: Recipient user ID
+ *         content:
+ *           type: string
+ *           description: Message content
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           description: Message creation timestamp
+ *         read:
+ *           type: boolean
+ *           description: Whether the message has been read
+ *     ChatHistoryItem:
+ *       type: object
+ *       properties:
+ *         _id:
+ *           type: string
+ *           description: User ID
+ *         email:
+ *           type: string
+ *           description: User's email
+ *         avatar:
+ *           type: string
+ *           description: User's avatar URL
+ *         isOnline:
+ *           type: boolean
+ *           description: Whether the user is currently online
+ *         unreadCount:
+ *           type: number
+ *           description: Number of unread messages from this user
+ *         lastMessage:
+ *           type: object
+ *           properties:
+ *             content:
+ *               type: string
+ *             timestamp:
+ *               type: string
+ *               format: date-time
+ *             read:
+ *               type: boolean
+ *     SendMessageRequest:
+ *       type: object
+ *       required:
+ *         - content
+ *       properties:
+ *         content:
+ *           type: string
+ *           description: Message content
+ *           example: "Hello! How are you?"
+ */
+/**
+ * @swagger
+ * /api/chats/history:
+ *   get:
+ *     summary: Get chat history with all users
+ *     tags: [Chats]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Retrieve chat history with all users the current user has chatted with, including last message and unread count
+ *     responses:
+ *       200:
+ *         description: Chat history retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/ChatHistoryItem'
+ *       401:
+ *         description: Unauthorized - Authentication required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ */
+/**
+ * @swagger
+ * /api/chats/{userId}/read:
+ *   post:
+ *     summary: Mark messages as read
+ *     tags: [Chats]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID whose messages to mark as read
+ *         example: "507f1f77bcf86cd799439011"
+ *     responses:
+ *       200:
+ *         description: Messages marked as read successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Bad request - Invalid user ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       401:
+ *         description: Unauthorized - Authentication required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ */
+/**
+ * @swagger
+ * /api/chats/{userId}:
+ *   get:
+ *     summary: Get chat messages with a specific user
+ *     tags: [Chats]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID to get chat messages with
+ *         example: "507f1f77bcf86cd799439011"
+ *     responses:
+ *       200:
+ *         description: Chat messages retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/ChatMessage'
+ *       400:
+ *         description: Bad request - Invalid user ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       401:
+ *         description: Unauthorized - Authentication required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *   post:
+ *     summary: Send a message to a specific user
+ *     tags: [Chats]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID to send message to
+ *         example: "507f1f77bcf86cd799439011"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/SendMessageRequest'
+ *     responses:
+ *       201:
+ *         description: Message sent successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ChatMessage'
+ *       400:
+ *         description: Bad request - Invalid user ID or missing content
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       401:
+ *         description: Unauthorized - Authentication required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ */
 // Get chat history with all users - MUST be before /:userId route
 router.get("/history", auth_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;

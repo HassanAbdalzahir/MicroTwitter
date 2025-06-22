@@ -10,6 +10,8 @@ const morgan_1 = __importDefault(require("morgan"));
 const http_1 = __importDefault(require("http"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const socket_io_1 = require("socket.io");
+const swagger_ui_express_1 = __importDefault(require("swagger-ui-express"));
+const swagger_1 = __importDefault(require("./swagger"));
 const authRoutes_1 = __importDefault(require("./routes/authRoutes"));
 const postsRoutes_1 = __importDefault(require("./routes/postsRoutes"));
 const userRoutes_1 = __importDefault(require("./routes/userRoutes"));
@@ -27,6 +29,8 @@ app.use("/api/auth/", authRoutes_1.default);
 app.use("/api/posts", postsRoutes_1.default);
 app.use("/api/users", userRoutes_1.default);
 app.use("/api/chats/", chatRoutes_1.default);
+// Swagger UI setup
+app.use("/api-docs", swagger_ui_express_1.default.serve, swagger_ui_express_1.default.setup(swagger_1.default));
 // server
 const server = http_1.default.createServer(app);
 //sociket io setup
