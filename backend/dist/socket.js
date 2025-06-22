@@ -1,15 +1,27 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = setupSocket;
 const socket_io_1 = require("socket.io");
+const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
+// Environment variables for URLs
+const BASE_URL = process.env.BASE_URL || "server.nanocode.online";
+const API_PATH = process.env.API_PATH || "/api/microtwitter";
+const FRONTEND_URL = process.env.FRONTEND_URL || `https://${BASE_URL}/apps/microtwitter`;
+const SOCKET_CORS_ORIGIN = process.env.SOCKET_CORS_ORIGIN || FRONTEND_URL;
 // Keep track of online users
 const onlineUsers = new Map(); // userId -> socketId
 function setupSocket(httpServer) {
     const io = new socket_io_1.Server(httpServer, {
         cors: {
-            origin: "http://localhost:3000",
+            origin: SOCKET_CORS_ORIGIN,
             methods: ["GET", "POST"],
+            credentials: true,
         },
+        path: `${API_PATH}/socket.io`,
     });
     io.on("connection", (socket) => {
         // When a user connects, store their socket ID

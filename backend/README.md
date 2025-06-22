@@ -55,7 +55,7 @@ A social media platform backend built with Node.js, TypeScript, Express, MongoDB
    npm run dev
    ```
 
-The server will start on `http://localhost:3001`
+The server will start on `http://localhost:3000`
 
 ## Environment Variables
 
@@ -63,18 +63,41 @@ Create a `.env` file in the root directory:
 
 ```env
 # Server Configuration
-PORT=3001
+PORT=3000
 NODE_ENV=development
 
 # Database Configuration
-MONGODB_URI=mongodb://admin:canyouseeme@localhost:27017/microTwitter?authSource=admin
+MONGODB_URI=mongodb://localhost:27017/microtwitter
+
+# Domain Configuration
+BASE_URL=server.nanocode.online
+API_PATH=/api/microtwitter
+FRONTEND_PATH=/apps/microtwitter
+
+# Frontend URL (for CORS and Socket.io)
+FRONTEND_URL=https://server.nanocode.online/apps/microtwitter
+
+# API Base URL
+API_BASE_URL=https://server.nanocode.online/api/microtwitter
+
+# Socket.io Configuration
+SOCKET_CORS_ORIGIN=https://server.nanocode.online/apps/microtwitter
 
 # JWT Configuration
-JWT_SECRET=canyouseeme
+JWT_SECRET=your_jwt_secret_here
+JWT_EXPIRES_IN=7d
 
-# CORS Configuration (Frontend URL)
-FRONTEND_URL=http://localhost:3000
+# Other configurations
+CORS_ORIGIN=https://server.nanocode.online
 ```
+
+### Subdomain Setup
+
+This application is configured to run on subdomains:
+
+- **API**: `https://server.nanocode.online/api/microtwitter/`
+- **Frontend**: `https://server.nanocode.online/apps/microtwitter`
+- **Socket.io**: `https://server.nanocode.online/api/microtwitter/socket.io`
 
 ## API Documentation
 
@@ -83,32 +106,32 @@ FRONTEND_URL=http://localhost:3000
 Access the interactive API documentation at:
 
 ```
-http://localhost:3001/api-docs
+https://server.nanocode.online/api/microtwitter/docs
 ```
 
 ### API Endpoints
 
 #### Authentication
 
-- `POST /api/auth/register` - Register a new user
-- `POST /api/auth/login` - Login user
+- `POST /api/microtwitter/auth/register` - Register a new user
+- `POST /api/microtwitter/auth/login` - Login user
 
 #### Posts
 
-- `GET /api/posts` - Get all posts
-- `POST /api/posts` - Create a new post (requires auth)
+- `GET /api/microtwitter/posts` - Get all posts
+- `POST /api/microtwitter/posts` - Create a new post (requires auth)
 
 #### Users
 
-- `GET /api/users/search?username=<query>` - Search users by username
-- `GET /api/users/:userId` - Get user profile by ID
+- `GET /api/microtwitter/users/search?username=<query>` - Search users by username
+- `GET /api/microtwitter/users/:userId` - Get user profile by ID
 
 #### Chats
 
-- `GET /api/chats/history` - Get chat history with all users
-- `GET /api/chats/:userId` - Get messages with specific user
-- `POST /api/chats/:userId` - Send message to user
-- `POST /api/chats/:userId/read` - Mark messages as read
+- `GET /api/microtwitter/chats/history` - Get chat history with all users
+- `GET /api/microtwitter/chats/:userId` - Get messages with specific user
+- `POST /api/microtwitter/chats/:userId` - Send message to user
+- `POST /api/microtwitter/chats/:userId/read` - Mark messages as read
 
 ## Socket.IO Events
 
@@ -126,6 +149,16 @@ http://localhost:3001/api-docs
 - `typing:start` - User started typing
 - `typing:stop` - User stopped typing
 - `chat:read` - Chat marked as read
+
+### Socket.io Connection
+
+Connect to Socket.io using the configured path:
+
+```javascript
+const socket = io("https://server.nanocode.online", {
+  path: "/api/microtwitter/socket.io",
+});
+```
 
 ## Development
 

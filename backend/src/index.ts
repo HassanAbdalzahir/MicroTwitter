@@ -16,33 +16,48 @@ import chatRoutes from "./routes/chatRoutes";
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 3000;
 const mongoUri =
   process.env.MONGODB_URI || "mongodb://localhost:27017/microtwitter";
 
+// Environment variables for URLs
+const BASE_URL = process.env.BASE_URL || "server.nanocode.online";
+const API_PATH = process.env.API_PATH || "/api/microtwitter";
+const FRONTEND_URL =
+  process.env.FRONTEND_URL || `https://${BASE_URL}/apps/microtwitter`;
+const SOCKET_CORS_ORIGIN = process.env.SOCKET_CORS_ORIGIN || FRONTEND_URL;
+const CORS_ORIGIN = process.env.CORS_ORIGIN || `https://${BASE_URL}`;
+
 // Middlewares
 app.use(express.json({ limit: "10mb" }));
-app.use(cors());
+app.use(
+  cors({
+    origin: CORS_ORIGIN,
+    credentials: true,
+  })
+);
 app.use(morgan("dev"));
 
-// Routes
-app.use("/api/auth/", authRoutes);
-app.use("/api/posts", postsRouter);
-app.use("/api/users", userRoutes);
-app.use("/api/chats/", chatRoutes);
+// Routes with API path prefix
+app.use(`${API_PATH}/auth`, authRoutes);
+app.use(`${API_PATH}/posts`, postsRouter);
+app.use(`${API_PATH}/users`, userRoutes);
+app.use(`${API_PATH}/chats`, chatRoutes);
 
 // Swagger UI setup
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use(`${API_PATH}/docs`, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // server
 const server = http.createServer(app);
 
-//sociket io setup
+// Socket.io setup with proper CORS configuration
 const io = new SocketIOServer(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: SOCKET_CORS_ORIGIN,
     methods: ["GET", "POST"],
+    credentials: true,
   },
+  path: `${API_PATH}/socket.io`,
 });
 
 // Make io accessible to routes
@@ -91,8 +106,11 @@ mongoose
   .connect(mongoUri)
   .then(() => {
     console.log(`⚓⚓ Database Connected 🚢🚢`);
-    server.listen(PORT, () =>
-      console.log(`🚀🚀 Server Running At Port: ${PORT} 🚀🚀`)
-    );
+    server.listen(PORT, () => {
+      console.log(`🚀🚀 Server Running At Port: ${PORT} 🚀🚀`);
+      console.log(`📡 API Base URL: https://${BASE_URL}${API_PATH}`);
+      console.log(`🌐 Frontend URL: ${FRONTEND_URL}`);
+      console.log(`🔌 Socket.io Path: ${API_PATH}/socket.io`);
+    });
   })
   .catch((err) => console.log(err));
