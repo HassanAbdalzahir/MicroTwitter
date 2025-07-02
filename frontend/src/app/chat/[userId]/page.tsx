@@ -8,6 +8,7 @@ import Link from "next/link";
 import { config } from "../../../config/env";
 
 interface ChatMessage {
+  _id?: string;
   from: string;
   to: string;
   content: string;
@@ -47,18 +48,23 @@ export default function ChatConversation({
     }
 
     // Fetch chat user details
-    fetch(`${config.apiUrl}/api/users/${params.userId}`, {
-      headers: { Authorization: `Bearer ${token}` },
+    fetch(`${config.apiUrl}/users/${params.userId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     })
       .then((res) => res.json())
       .then((data) => {
         setChatUser(data);
         setIsUserOnline(data.isOnline || false);
         setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Failed to fetch user:", error);
       });
 
     // Fetch chat history
-    fetch(`${config.apiUrl}/api/chats/${params.userId}`, {
+    fetch(`${config.apiUrl}/chats/${params.userId}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -77,8 +83,28 @@ export default function ChatConversation({
     // Connect to socket
     socketRef.current = io(config.socketUrl, { path: config.socketPath });
 
-    // Join room
-    socketRef.current.emit("join", user._id);
+    // Helper to register user online and join room
+    const registerUser = () => {
+      socketRef.current?.emit("user:online", user._id);
+      socketRef.current?.emit("join", user._id);
+    };
+
+    // Emit on initial connect
+    registerUser();
+
+    // Add connection event listeners for debugging and re-register
+    socketRef.current.on("connect", () => {
+      registerUser();
+      console.log("Chat socket connected:", socketRef.current?.id);
+    });
+
+    socketRef.current.on("connect_error", (error) => {
+      console.error("Chat socket connection error:", error);
+    });
+
+    socketRef.current.on("disconnect", (reason) => {
+      console.log("Chat socket disconnected:", reason);
+    });
 
     // Listen for new messages
     socketRef.current.on("chat:receive", (msg: ChatMessage) => {
@@ -91,12 +117,31 @@ export default function ChatConversation({
               existingMsg.from === msg.from &&
               existingMsg.to === msg.to &&
               existingMsg.content === msg.content &&
-              existingMsg.createdAt === msg.createdAt
+              Math.abs(
+                new Date(existingMsg.createdAt).getTime() -
+                  new Date(msg.createdAt).getTime()
+              ) < 5000 // Within 5 seconds
           );
 
           if (messageExists) {
             console.log("Duplicate message detected, not adding");
             return prev;
+          }
+
+          // Check if we have a temporary message that should be replaced
+          const tempMessageIndex = prev.findIndex(
+            (existingMsg) =>
+              existingMsg.from === msg.from &&
+              existingMsg.to === msg.to &&
+              existingMsg.content === msg.content &&
+              !existingMsg._id // Temporary messages don't have _id
+          );
+
+          if (tempMessageIndex !== -1) {
+            // Replace the temporary message with the real one
+            const newMessages = [...prev];
+            newMessages[tempMessageIndex] = msg;
+            return newMessages;
           }
 
           const newMessages = [...prev, msg];
@@ -259,27 +304,41 @@ export default function ChatConversation({
       to: params.userId,
     });
 
+    // Create a temporary message object for immediate display
+    const tempMessage: ChatMessage = {
+      from: user._id,
+      to: params.userId,
+      content: messageContent,
+      createdAt: new Date().toISOString(),
+      read: false,
+    };
+
+    // Immediately add the message to the local state for instant feedback
+    setMessages((prev) => [...prev, tempMessage]);
+
     try {
       // Send via REST for persistence - this will also emit the socket event
-      const response = await fetch(
-        `${config.apiUrl}/api/chats/${params.userId}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ content: messageContent }),
-        }
-      );
+      const response = await fetch(`${config.apiUrl}/chats/${params.userId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ content: messageContent }),
+      });
 
       if (!response.ok) {
-        // If the request failed, restore the input
+        // If the request failed, remove the temporary message and restore the input
+        setMessages((prev) => prev.filter((msg) => msg !== tempMessage));
         setInput(messageContent);
         console.error("Failed to send message");
+      } else {
+        // If successful, the socket event will update the message with the real data from the server
+        // The temporary message will be replaced by the real one from the socket
       }
     } catch (error) {
-      // If there's an error, restore the input
+      // If there's an error, remove the temporary message and restore the input
+      setMessages((prev) => prev.filter((msg) => msg !== tempMessage));
       setInput(messageContent);
       console.error("Error sending message:", error);
     }
@@ -318,7 +377,7 @@ export default function ChatConversation({
     if (!token) return;
 
     try {
-      await fetch(`${config.apiUrl}/api/chats/${params.userId}/read`, {
+      await fetch(`${config.apiUrl}/chats/${params.userId}/read`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -326,7 +385,7 @@ export default function ChatConversation({
       });
 
       // Update global unread count
-      fetch(`${config.apiUrl}/api/chats/history`, {
+      fetch(`${config.apiUrl}/chats/history`, {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((res) => res.json())

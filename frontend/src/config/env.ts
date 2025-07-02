@@ -2,14 +2,14 @@
 
 export const config = {
   // API Configuration
-  apiUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001",
+  apiUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000",
 
   // Socket.IO Configuration
-  socketUrl: process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001",
+  socketUrl: process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3000",
 
   // Socket.IO Path Configuration
   socketPath:
-    process.env.NEXT_PUBLIC_SOCKET_PATH || "/apps/microtwitter/api/socket.io",
+    process.env.NEXT_PUBLIC_SOCKET_PATH || "/api/microtwitter/socket.io",
 
   // App Configuration
   appName: process.env.NEXT_PUBLIC_APP_NAME || "MicroTwitter",

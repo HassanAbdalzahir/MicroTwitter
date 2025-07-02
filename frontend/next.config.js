@@ -1,9 +1,4 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-  reactStrictMode: true,
-  swcMinify: true,
-  basePath: "/apps/microtwitter",
-  trailingSlash: true,
-};
+const nextConfig = {};
 
 module.exports = nextConfig;

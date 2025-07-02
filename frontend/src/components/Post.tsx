@@ -1,11 +1,49 @@
+import { useState } from "react";
+import { useAuth } from "../context/AuthContext";
+import { config } from "../config/env";
+
 interface PostProps {
   name: string;
   time: string;
   content: string;
   avatar?: string;
+  likes: number;
+  liked: boolean;
+  postId: string;
+  onLike: () => void;
+  onUnlike: () => void;
 }
 
-export default function Post({ name, time, content, avatar }: PostProps) {
+export default function Post({
+  name,
+  time,
+  content,
+  avatar,
+  likes,
+  liked,
+  postId,
+  onLike,
+  onUnlike,
+}: PostProps) {
+  const { user, token } = useAuth();
+  const [likeLoading, setLikeLoading] = useState(false);
+
+  const handleLike = async () => {
+    if (!user || !token || likeLoading) return;
+    setLikeLoading(true);
+    const res = await fetch(
+      `${config.apiUrl}/posts/${postId}/${liked ? "unlike" : "like"}`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    if (res.ok) {
+      liked ? onUnlike() : onLike();
+    }
+    setLikeLoading(false);
+  };
+
   return (
     <div className="group relative bg-card border border-border rounded-xl p-6 hover:shadow-modern-lg transition-all duration-300 animate-fade-in">
       <div className="flex items-start space-x-4">
@@ -60,10 +98,17 @@ export default function Post({ name, time, content, avatar }: PostProps) {
 
       {/* Interactive elements */}
       <div className="flex items-center gap-6 mt-4 pt-4 border-t border-border/50">
-        <button className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors group">
+        <button
+          className={`flex items-center gap-2 transition-colors group ${
+            liked ? "text-primary" : "text-muted-foreground hover:text-primary"
+          }`}
+          onClick={handleLike}
+          disabled={!user || likeLoading}
+        >
           <svg
-            className="w-5 h-5 group-hover:scale-110 transition-transform"
-            fill="none"
+            className={`w-5 h-5 group-hover:scale-110 transition-transform ${
+              liked ? "fill-primary stroke-primary" : "fill-none stroke-current"
+            }`}
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
@@ -74,7 +119,9 @@ export default function Post({ name, time, content, avatar }: PostProps) {
               d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
             />
           </svg>
-          <span className="text-sm font-medium">Like</span>
+          <span className="text-sm font-medium">
+            {likes} Like{likes !== 1 ? "s" : ""}
+          </span>
         </button>
 
         <button className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors group">

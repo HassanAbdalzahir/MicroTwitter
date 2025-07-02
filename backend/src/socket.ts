@@ -5,14 +5,11 @@ import dotenv from "dotenv";
 dotenv.config();
 
 // Environment variables for URLs
-const BASE_URL = process.env.BASE_URL || "server.nanocode.online";
-const API_PATH = process.env.API_PATH || "/api/microtwitter";
-const FRONTEND_URL =
-  process.env.FRONTEND_URL || `https://${BASE_URL}/apps/microtwitter`;
-const SOCKET_CORS_ORIGIN = process.env.SOCKET_CORS_ORIGIN || FRONTEND_URL;
+const FRONTEND_URL = "http://localhost:4004";
+const SOCKET_CORS_ORIGIN = FRONTEND_URL;
 
 // Keep track of online users
-const onlineUsers = new Map<string, string>(); // userId -> socketId
+const onlineUsers = new Map<string, Set<string>>();
 
 export default function setupSocket(httpServer: HTTPServer) {
   const io = new Server(httpServer, {
@@ -21,56 +18,85 @@ export default function setupSocket(httpServer: HTTPServer) {
       methods: ["GET", "POST"],
       credentials: true,
     },
-    path: `${API_PATH}/socket.io`,
   });
 
   io.on("connection", (socket) => {
-    // When a user connects, store their socket ID
+    console.log("User connected:", socket.id);
+    let currentUserId: string | null = null;
+
+    // Register user as online
     socket.on("user:online", (userId: string) => {
-      onlineUsers.set(userId, socket.id);
-      // Broadcast to all clients that this user is online
-      io.emit("user:status", { userId, status: "online" });
+      currentUserId = userId;
+
+      if (!onlineUsers.has(userId)) {
+        onlineUsers.set(userId, new Set());
+        io.emit("user:status", { userId, status: "online" }); // Notify all
+      }
+
+      onlineUsers.get(userId)?.add(socket.id);
     });
 
-    // When a user disconnects, remove them from online users
-    socket.on("disconnect", () => {
-      let disconnectedUserId: string | undefined;
-      for (const [userId, socketId] of onlineUsers.entries()) {
-        if (socketId === socket.id) {
-          disconnectedUserId = userId;
-          break;
+    // Join user's private room
+    socket.on("join", (userId: string) => {
+      currentUserId = userId;
+      socket.join(userId);
+      console.log(`User ${userId} joined their room`);
+    });
+
+    // Typing indicators
+    socket.on("typing:start", ({ from, to }) => {
+      io.to(to).emit("typing:start", { from, to });
+    });
+
+    socket.on("typing:stop", ({ from, to }) => {
+      io.to(to).emit("typing:stop", { from, to });
+    });
+
+    // Chat message
+    socket.on("chat:send", (data) => {
+      const recipients = onlineUsers.get(data.to);
+      if (recipients) {
+        for (const socketId of recipients) {
+          io.to(socketId).emit("chat:receive", data);
         }
       }
-      if (disconnectedUserId) {
-        onlineUsers.delete(disconnectedUserId);
-        io.emit("user:status", {
-          userId: disconnectedUserId,
-          status: "offline",
-        });
-      }
     });
 
-    // Handle chat messages
-    socket.on("chat:send", (data) => {
-      const recipientSocketId = onlineUsers.get(data.to);
-      if (recipientSocketId) {
-        io.to(recipientSocketId).emit("chat:receive", data);
-      }
-    });
-
-    // Handle typing indicators
+    // Typing
     socket.on("chat:typing", (data) => {
-      const recipientSocketId = onlineUsers.get(data.to);
-      if (recipientSocketId) {
-        io.to(recipientSocketId).emit("chat:typing", data);
+      const recipients = onlineUsers.get(data.to);
+      if (recipients) {
+        for (const socketId of recipients) {
+          io.to(socketId).emit("chat:typing", data);
+        }
       }
     });
 
-    // Handle read receipts
-    socket.on("chat:read", (data: { from: string; to: string }) => {
-      const recipientSocketId = onlineUsers.get(data.from);
-      if (recipientSocketId) {
-        io.to(recipientSocketId).emit("chat:read", data);
+    // Read
+    socket.on("chat:read", ({ from, to }) => {
+      const recipients = onlineUsers.get(from);
+      if (recipients) {
+        for (const socketId of recipients) {
+          io.to(socketId).emit("chat:read", { from, to });
+        }
+      }
+    });
+
+    // Disconnect
+    socket.on("disconnect", () => {
+      console.log("User disconnected:", socket.id);
+      if (currentUserId) {
+        const sockets = onlineUsers.get(currentUserId);
+        if (sockets) {
+          sockets.delete(socket.id);
+          if (sockets.size === 0) {
+            onlineUsers.delete(currentUserId);
+            io.emit("user:status", {
+              userId: currentUserId,
+              status: "offline",
+            });
+          }
+        }
       }
     });
   });

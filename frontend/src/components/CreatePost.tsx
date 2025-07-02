@@ -10,7 +10,7 @@ export default function CreatePost({ onPost }: { onPost: () => void }) {
   const handlePost = async () => {
     if (!content.trim() || !token || !user) return;
     setLoading(true);
-    await fetch(`${config.apiUrl}/api/posts`, {
+    await fetch(`${config.apiUrl}/posts`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -54,13 +54,13 @@ export default function CreatePost({ onPost }: { onPost: () => void }) {
           {user.avatar ? (
             <img
               src={user.avatar}
-              alt={`${user.username}'s avatar`}
+              alt={`${user.username || user.email}'s avatar`}
               className="w-12 h-12 rounded-full object-cover border-2 border-border"
             />
           ) : (
             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 border-2 border-border flex items-center justify-center">
               <span className="text-lg font-semibold text-primary">
-                {user.username.charAt(0).toUpperCase()}
+                {(user.username || user.email || "U").charAt(0).toUpperCase()}
               </span>
             </div>
           )}

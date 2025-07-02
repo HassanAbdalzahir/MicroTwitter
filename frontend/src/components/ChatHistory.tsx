@@ -28,7 +28,7 @@ export default function ChatHistory() {
     if (!token) return;
 
     setLoading(true);
-    fetch(`${config.apiUrl}/api/chats/history`, {
+    fetch(`${config.apiUrl}/chats/history`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -72,15 +72,34 @@ export default function ChatHistory() {
 
     const socket = io(config.socketUrl, { path: config.socketPath });
 
+    // Emit user:online event to register the user
+    socket.emit("user:online", user._id);
+
+    // Join room
     socket.emit("join", user._id);
 
+    // Add connection event listeners for debugging
+    socket.on("connect", () => {
+      console.log("ChatHistory socket connected:", socket.id);
+    });
+
+    socket.on("connect_error", (error) => {
+      console.error("ChatHistory socket connection error:", error);
+    });
+
+    socket.on("disconnect", (reason) => {
+      console.log("ChatHistory socket disconnected:", reason);
+    });
+
     socket.on("user:online", ({ userId }) => {
+      console.log("User came online:", userId);
       setUsers((prev) =>
         prev.map((u) => (u._id === userId ? { ...u, isOnline: true } : u))
       );
     });
 
     socket.on("user:offline", ({ userId }) => {
+      console.log("User went offline:", userId);
       setUsers((prev) =>
         prev.map((u) => (u._id === userId ? { ...u, isOnline: false } : u))
       );

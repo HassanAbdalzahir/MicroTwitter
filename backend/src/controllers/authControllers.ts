@@ -27,7 +27,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     const token = jwt.sign(
       { userId: user._id, email: user.email, username: user.username },
       JWT_SECRET!,
-      { expiresIn: "3d" }
+      { expiresIn: "30d" }
     );
 
     res.status(201).json({
@@ -55,19 +55,31 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     }
     const { email, password } = req.body;
     const user = await User.findOne({ email });
-    const valid = await bcrypt.compare(password, user!.password);
+
+    if (!user) {
+      res.status(400).json({ error: "User not found" });
+      return;
+    }
+
+    const valid = await bcrypt.compare(password, user.password);
     if (!valid) {
       res.status(400).json({ error: "password is wrong" });
       return;
     }
     const token = jwt.sign(
-      { userId: user!._id, email: user!.email, username: user!.username },
+      { userId: user._id, email: user.email, username: user.username },
       JWT_SECRET!,
-      { expiresIn: "3d" }
+      { expiresIn: "30d" }
     );
 
     res.json({
-      user: { _id: user?._id, email: user?.email, createdAt: user?.createdAt },
+      user: {
+        _id: user._id,
+        email: user.email,
+        username: user.username,
+        avatar: user.avatar,
+        createdAt: user.createdAt,
+      },
       token,
     });
   } catch (err) {

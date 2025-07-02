@@ -15,10 +15,32 @@ export default function GlobalNotifications() {
 
     const socket = io(config.socketUrl, { path: config.socketPath });
 
-    socket.emit("join", user._id);
+    // Helper to register user online and join room
+    const registerUser = () => {
+      socket.emit("user:online", user._id);
+      socket.emit("join", user._id);
+    };
+
+    // Emit on initial connect
+    registerUser();
+
+    // Re-emit on reconnect
+    socket.on("connect", () => {
+      registerUser();
+      console.log("Socket connected:", socket.id);
+    });
+
+    socket.on("connect_error", (error) => {
+      console.error("Socket connection error:", error);
+    });
+
+    socket.on("disconnect", (reason) => {
+      console.log("Socket disconnected:", reason);
+    });
 
     // Listen for new messages
     socket.on("chat:receive", (msg: any) => {
+      console.log("Received message via socket:", msg);
       // Only update unread count if we're not in the chat with this user
       const isInChatWithSender = pathname === `/chat/${msg.from}`;
       const isInChatWithReceiver = pathname === `/chat/${msg.to}`;
@@ -32,10 +54,11 @@ export default function GlobalNotifications() {
 
     // Listen for read receipts to decrease unread count
     socket.on("chat:read", ({ from, to }) => {
+      console.log("Received read receipt:", { from, to });
       // If we're marking messages as read (we're the 'to' user), decrease count
       if (to === user._id) {
         // Fetch updated unread count from server
-        fetch(`${config.apiUrl}/api/chats/history`, {
+        fetch(`${config.apiUrl}/chats/history`, {
           headers: { Authorization: `Bearer ${token}` },
         })
           .then((res) => res.json())
@@ -46,14 +69,14 @@ export default function GlobalNotifications() {
             );
             setUnreadCount(totalUnread);
           })
-          .catch((err) =>
-            console.error("Failed to fetch updated unread count:", err)
-          );
+          .catch((error) => {
+            console.error("Failed to fetch chat history:", error);
+          });
       }
     });
 
     // Fetch initial unread count
-    fetch(`${config.apiUrl}/api/chats/history`, {
+    fetch(`${config.apiUrl}/chats/history`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -64,20 +87,33 @@ export default function GlobalNotifications() {
         );
         setUnreadCount(totalUnread);
       })
-      .catch((err) =>
-        console.error("Failed to fetch initial unread count:", err)
-      );
+      .catch((error) => {
+        console.error("Failed to fetch chat history:", error);
+      });
 
     return () => {
       socket.disconnect();
     };
   }, [user, token, pathname, setUnreadCount]);
 
-  // Reset unread count when entering chat page
+  // Update unread count when entering chat page
   useEffect(() => {
     if (pathname.startsWith("/chat/") && user && token) {
-      // Reset count when entering a specific chat
-      setUnreadCount(0);
+      // Fetch updated unread count when entering a specific chat
+      fetch(`${config.apiUrl}/chats/history`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          const totalUnread = data.reduce(
+            (sum: number, chat: any) => sum + (chat.unreadCount || 0),
+            0
+          );
+          setUnreadCount(totalUnread);
+        })
+        .catch((error) => {
+          console.error("Failed to fetch chat history:", error);
+        });
     }
   }, [pathname, user, token, setUnreadCount]);
 

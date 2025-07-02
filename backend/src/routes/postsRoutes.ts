@@ -1,8 +1,13 @@
 import { Router } from "express";
 // import { body } from "express-validator";
 // import User from "../models/User";
-import { createPost, getPosts } from "../controllers/postsControllers";
-import { requireAuth } from "../middleware/auth";
+import {
+  createPost,
+  getPosts,
+  likePost,
+  unlikePost,
+} from "../controllers/postsControllers";
+import { authenticateToken } from "../middleware/auth";
 
 const router = Router();
 
@@ -119,6 +124,9 @@ const router = Router();
  *                   type: string
  */
 router.get("/", getPosts);
-router.post("/", requireAuth, createPost);
+router.post("/", authenticateToken, createPost);
+// Like and unlike routes
+router.post("/:postId/like", authenticateToken, likePost);
+router.post("/:postId/unlike", authenticateToken, unlikePost);
 
 export default router;

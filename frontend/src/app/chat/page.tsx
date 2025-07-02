@@ -27,7 +27,7 @@ export default function ChatPage() {
     setIsSearching(true);
     try {
       const res = await fetch(
-        `${config.apiUrl}/api/users/search?username=${encodeURIComponent(
+        `${config.apiUrl}/users/search?username=${encodeURIComponent(
           searchQuery
         )}`,
         {

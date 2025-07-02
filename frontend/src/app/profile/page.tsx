@@ -65,7 +65,7 @@ export default function ProfilePage() {
     setMessage("");
 
     try {
-      const res = await fetch(`${config.apiUrl}/api/auth/avatar`, {
+      const res = await fetch(`${config.apiUrl}/auth/avatar`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
