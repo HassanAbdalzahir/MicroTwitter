@@ -15,7 +15,7 @@ cp env.example .env.local
 
 ### Optional Environment Variables
 
-- `NEXT_PUBLIC_APP_NAME`: Application name (default: MicroTwitter)
+- `NEXT_PUBLIC_APP_NAME`: Application name (default: NanoTwitter)
 - `NEXT_PUBLIC_APP_DESCRIPTION`: Application description
 - `NEXT_PUBLIC_ENABLE_CHAT`: Enable chat feature (default: true)
 - `NEXT_PUBLIC_ENABLE_NOTIFICATIONS`: Enable notifications (default: true)

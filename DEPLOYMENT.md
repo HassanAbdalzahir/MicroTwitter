@@ -12,7 +12,7 @@
 
 ```bash
 git clone <your-repo-url>
-cd MicroTwitter
+cd NanoTwitter
 ```
 
 ### 2. Environment Configuration

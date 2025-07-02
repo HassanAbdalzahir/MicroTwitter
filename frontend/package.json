@@ -1,5 +1,5 @@
 {
-  "name": "frontend",
+  "name": "nanotwitter",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -26,5 +26,6 @@
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"
-  }
+  },
+  "description": "NanoTwitter frontend app"
 }

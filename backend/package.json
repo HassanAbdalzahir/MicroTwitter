@@ -1,5 +1,5 @@
 {
-  "name": "backend",
+  "name": "nanotwitter",
   "version": "1.0.0",
   "main": "src/index.ts",
   "scripts": {
@@ -13,7 +13,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "NanoTwitter backend server",
   "dependencies": {
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.19",
